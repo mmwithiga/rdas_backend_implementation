@@ -1,0 +1,81 @@
+spring:
+  application:
+    name: rdas
+  cache:
+    type: redis
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 10
+          max-idle: 5
+          min-idle: 1
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+soap:
+  countryinfo:
+    wsdl-url: http://webservices.oorsprong.org/websamples.countryinfo/CountryInfoService.wso?WSDL
+    endpoint-url: http://webservices.oorsprong.org/websamples.countryinfo/CountryInfoService.wso
+    connect-timeout: 10000
+    read-timeout: 15000
+
+cache:
+  ttl:
+    countries: 86400     # 24 hours in seconds
+    currencies: 86400
+    continents: 604800   # 7 days
+    languages: 86400
+  refresh:
+    cron: "0 0 */12 * * *"   # every 12 hours
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      soapService:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 60s
+        permitted-number-of-calls-in-half-open-state: 3
+        register-health-indicator: true
+  retry:
+    instances:
+      soapService:
+        max-attempts: 3
+        wait-duration: 1s
+        exponential-backoff-multiplier: 2
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,caches,circuitbreakers
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    display-request-duration: true
+    tags-sorter: alpha
+
+logging:
+  level:
+    com.rdas: DEBUG
+    org.springframework.web.client: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [traceId=%X{traceId}] %-5level %logger{36} - %msg%n"
