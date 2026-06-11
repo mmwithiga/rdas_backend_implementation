@@ -69,7 +69,7 @@ RDAS was built to address these challenges. It acts as an **Anti-Corruption Laye
              └─────────────────────┘
 ```
 
-See [`docs/architecture.png`](docs/architecture.png) for the full annotated diagram.
+See [`docs/architecture.png`](docs/architecture_diagram.pdf.png) for the full annotated diagram.
 
 ---
 

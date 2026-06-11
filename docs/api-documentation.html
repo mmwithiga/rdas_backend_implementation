@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RDAS — API Documentation</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8f9fa; }
+
+    .banner {
+      background: linear-gradient(135deg, #1a3a2b 0%, #2d8a5e 100%);
+      color: white;
+      padding: 28px 40px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .banner-icon {
+      width: 48px; height: 48px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+    }
+    .banner h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.3px; }
+    .banner p  { font-size: 13px; opacity: 0.75; margin-top: 3px; }
+
+    .badges {
+      display: flex;
+      gap: 8px;
+      padding: 14px 40px;
+      background: white;
+      border-bottom: 1px solid #e5e7eb;
+      flex-wrap: wrap;
+    }
+    .badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+    .badge-green  { background: #d1fae5; color: #065f46; }
+    .badge-blue   { background: #dbeafe; color: #1e40af; }
+    .badge-purple { background: #ede9fe; color: #5b21b6; }
+    .badge-amber  { background: #fef3c7; color: #92400e; }
+
+    #swagger-ui { max-width: 1200px; margin: 0 auto; padding: 24px 24px 60px; }
+
+    /* Swagger UI overrides */
+    .swagger-ui .topbar { display: none; }
+    .swagger-ui .info    { margin: 0 0 16px; }
+    .swagger-ui .info .title { font-size: 20px; color: #1a3a2b; }
+    .swagger-ui .scheme-container { background: #f8f9fa; padding: 12px 20px; border-radius: 8px; }
+    .swagger-ui .opblock-tag     { font-size: 15px; font-weight: 600; border-bottom: 1px solid #e5e7eb; }
+    .swagger-ui .opblock.opblock-get    { border-color: #61affe; background: rgba(97,175,254,.05); }
+    .swagger-ui .opblock.opblock-post   { border-color: #49cc90; background: rgba(73,204,144,.05); }
+    .swagger-ui .btn.execute            { background: #2d8a5e; border-color: #2d8a5e; }
+    .swagger-ui .btn.execute:hover      { background: #1a6b47; }
+    .swagger-ui select                  { border-radius: 6px; }
+    .swagger-ui .response-col_status    { font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<div class="banner">
+  <div class="banner-icon">🌍</div>
+  <div>
+    <h1>API Documentation</h1>
+    <p>REST API for country, currency, language and geographical reference data &nbsp;·&nbsp; v1.0.0</p>
+  </div>
+</div>
+
+
+<div id="swagger-ui"></div>
+
+<script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js"></script>
+<script>
+const spec = {
+  openapi: "3.0.3",
+  info: {
+    title: "API Documentation",
+    contact: { name: "RDAS Team", email: "rdas-support@example.com" }
+  },
+  servers: [
+    { url: "http://localhost:8080", description: "Local development" },
+    { url: "https://rdas.example.com", description: "Production" }
+  ],
+  tags: [
+    { name: "Countries",   description: "Search, filter and retrieve country reference data" },
+    { name: "Currencies",  description: "Currency listings and country-currency relationships" },
+    { name: "Continents",  description: "Continent reference data" },
+    { name: "Languages",   description: "Language reference data" },
+    { name: "Admin",       description: "Operational endpoints — cache management" }
+  ],
+  paths: {
+    "/api/v1/countries": {
+      get: {
+        tags: ["Countries"],
+        summary: "Search countries",
+        description: `Returns a paginated, filterable, sortable list of countries.
+
+All filters are **optional and combinable**. When no filters are provided, all countries are returned.
+
+**Sortable fields:** \`name\`, \`isoCode\`, \`continentName\`, \`currencyName\`
+
+**Example:** \`GET /api/v1/countries?name=ken&continent=AF&page=0&size=20&sort=name,asc\``,
+        operationId: "searchCountries",
+        parameters: [
+          {
+            name: "name", in: "query", required: false,
+            description: "Partial, case-insensitive match on country name (e.g. `ken` matches `Kenya`)",
+            schema: { type: "string", minLength: 1, maxLength: 100, example: "kenya" }
+          },
+          {
+            name: "continent", in: "query", required: false,
+            description: "2-letter continent code (e.g. `AF`, `EU`, `NA`, `AS`, `OC`, `SA`)",
+            schema: { type: "string", minLength: 2, maxLength: 2, example: "AF" }
+          },
+          {
+            name: "currency", in: "query", required: false,
+            description: "3-letter ISO 4217 currency code (e.g. `USD`, `KES`, `EUR`)",
+            schema: { type: "string", minLength: 3, maxLength: 3, example: "KES" }
+          },
+          {
+            name: "language", in: "query", required: false,
+            description: "2-3 letter ISO 639 language code (e.g. `EN`, `FR`, `SW`)",
+            schema: { type: "string", minLength: 2, maxLength: 3, example: "EN" }
+          },
+          {
+            name: "page", in: "query", required: false,
+            description: "Zero-indexed page number (default: 0)",
+            schema: { type: "integer", minimum: 0, default: 0, example: 0 }
+          },
+          {
+            name: "size", in: "query", required: false,
+            description: "Number of results per page — max 100 (default: 20)",
+            schema: { type: "integer", minimum: 1, maximum: 100, default: 20, example: 20 }
+          },
+          {
+            name: "sort", in: "query", required: false,
+            description: "Sort expression: `field,direction` — e.g. `name,asc` or `isoCode,desc`",
+            schema: { type: "string", example: "name,asc" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Success",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/PagedCountryResponse" },
+                example: {
+                  content: [
+                    {
+                      isoCode: "KE", name: "Kenya", capital: "Nairobi",
+                      continentCode: "AF", continentName: "Africa",
+                      currencyIsoCode: "KES", currencyName: "Kenyan Shilling",
+                      languageIsoCode: "EN", languageName: "English",
+                      flagUrl: "https://www.countryflags.io/KE/flat/64.png",
+                      phoneCode: "+254"
+                    }
+                  ],
+                  totalElements: 54, totalPages: 3, currentPage: 0,
+                  pageSize: 20, first: true, last: false
+                }
+              }
+            }
+          },
+          "400": { description: "Invalid filter or pagination parameters", content: { "application/json": { schema: { $ref: "#/components/schemas/ValidationErrorResponse" } } } },
+          "503": { description: "SOAP service unavailable — circuit open or timeout", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+
+    "/api/v1/countries/{isoCode}": {
+      get: {
+        tags: ["Countries"],
+        summary: "Get country by ISO code",
+        description: "Returns full details for a single country by its 2-letter ISO 3166-1 alpha-2 code.",
+        operationId: "getCountry",
+        parameters: [
+          {
+            name: "isoCode", in: "path", required: true,
+            description: "2-letter ISO country code (e.g. `KE`, `US`, `DE`)",
+            schema: { type: "string", pattern: "^[A-Za-z]{2}$", example: "KE" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Success",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/CountryResponse" },
+                example: {
+                  isoCode: "KE", name: "Kenya", capital: "Nairobi",
+                  continentCode: "AF", continentName: "Africa",
+                  currencyIsoCode: "KES", currencyName: "Kenyan Shilling",
+                  languageIsoCode: "EN", languageName: "English",
+                  flagUrl: "https://www.countryflags.io/KE/flat/64.png",
+                  phoneCode: "+254"
+                }
+              }
+            }
+          },
+          "400": { description: "ISO code must be exactly 2 letters", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "404": { description: "Country not found", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "503": { description: "Reference data temporarily unavailable", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+
+    "/api/v1/countries/{isoCode}/currency": {
+      get: {
+        tags: ["Countries"],
+        summary: "Get currency for a country",
+        description: "Returns full country details including currency information for the given ISO code.",
+        operationId: "getCountryCurrency",
+        parameters: [
+          {
+            name: "isoCode", in: "path", required: true,
+            description: "2-letter ISO country code",
+            schema: { type: "string", pattern: "^[A-Za-z]{2}$", example: "KE" }
+          }
+        ],
+        responses: {
+          "200": { description: "Success", content: { "application/json": { schema: { $ref: "#/components/schemas/CountryResponse" } } } },
+          "404": { description: "Country not found", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+
+    "/api/v1/currencies": {
+      get: {
+        tags: ["Currencies"],
+        summary: "List all currencies",
+        description: "Returns all available currencies from the reference data set. Results are served from Redis cache (24h TTL).",
+        operationId: "getAllCurrencies",
+        responses: {
+          "200": {
+            description: "Success",
+            content: {
+              "application/json": {
+                schema: { type: "array", items: { $ref: "#/components/schemas/CurrencyData" } },
+                example: [
+                  { isoCode: "KES", name: "Kenyan Shilling" },
+                  { isoCode: "USD", name: "US Dollar" },
+                  { isoCode: "EUR", name: "Euro" }
+                ]
+              }
+            }
+          },
+          "503": { description: "Reference data temporarily unavailable", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+
+    "/api/v1/currencies/{code}/countries": {
+      get: {
+        tags: ["Currencies"],
+        summary: "Countries using a currency",
+        description: "Returns all countries that use the specified ISO 4217 currency code.",
+        operationId: "getCountriesByCurrency",
+        parameters: [
+          {
+            name: "code", in: "path", required: true,
+            description: "3-letter ISO 4217 currency code (e.g. `USD`, `EUR`, `KES`)",
+            schema: { type: "string", pattern: "^[A-Za-z]{3}$", example: "USD" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Success",
+            content: {
+              "application/json": {
+                schema: { type: "array", items: { $ref: "#/components/schemas/CountryResponse" } }
+              }
+            }
+          },
+          "400": { description: "Currency code must be exactly 3 letters", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "503": { description: "Reference data temporarily unavailable", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+
+    "/api/v1/continents": {
+      get: {
+        tags: ["Continents"],
+        summary: "List all continents",
+        description: "Returns all continents. Cached for 7 days — continent data is effectively permanent.",
+        operationId: "getAllContinents",
+        responses: {
+          "200": {
+            description: "Success",
+            content: {
+              "application/json": {
+                schema: { type: "array", items: { $ref: "#/components/schemas/ContinentData" } },
+                example: [
+                  { code: "AF", name: "Africa" },
+                  { code: "EU", name: "Europe" },
+                  { code: "NA", name: "North America" },
+                  { code: "AS", name: "Asia" },
+                  { code: "OC", name: "Oceania" },
+                  { code: "SA", name: "South America" },
+                  { code: "AN", name: "Antarctica" }
+                ]
+              }
+            }
+          },
+          "503": { description: "Reference data temporarily unavailable", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+
+    "/api/v1/languages": {
+      get: {
+        tags: ["Languages"],
+        summary: "List all languages",
+        description: "Returns all available languages from the reference data set. Cached for 24 hours.",
+        operationId: "getAllLanguages",
+        responses: {
+          "200": {
+            description: "Success",
+            content: {
+              "application/json": {
+                schema: { type: "array", items: { $ref: "#/components/schemas/LanguageData" } },
+                example: [
+                  { isoCode: "EN", name: "English" },
+                  { isoCode: "FR", name: "French" },
+                  { isoCode: "SW", name: "Swahili" }
+                ]
+              }
+            }
+          },
+          "503": { description: "Reference data temporarily unavailable", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+
+    "/api/v1/admin/cache/refresh": {
+      post: {
+        tags: ["Admin"],
+        summary: "Refresh all caches",
+        description: `Evicts all cached reference data and re-fetches from the SOAP service.
+
+Use this endpoint when:
+- Reference data has changed and you don't want to wait for the 12-hour scheduled refresh
+- A cache refresh failed and data appears stale
+- Post-deployment verification
+
+⚠️ This triggers live SOAP calls — use sparingly in production.`,
+        operationId: "refreshCache",
+        responses: {
+          "200": {
+            description: "Cache refreshed successfully",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/CacheRefreshResponse" },
+                example: {
+                  status: "refreshed",
+                  timestamp: "2024-03-15T10:30:00Z",
+                  durationMs: 4820
+                }
+              }
+            }
+          },
+          "503": { description: "SOAP service unavailable — refresh failed", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    }
+  },
+
+  components: {
+    schemas: {
+      CountryResponse: {
+        type: "object",
+        description: "Full country record including capital, currency, language, flag and phone code",
+        properties: {
+          isoCode:         { type: "string", example: "KE",                  description: "ISO 3166-1 alpha-2 country code" },
+          name:            { type: "string", example: "Kenya",               description: "Full country name" },
+          capital:         { type: "string", example: "Nairobi",             description: "Capital city name" },
+          continentCode:   { type: "string", example: "AF",                  description: "2-letter continent code" },
+          continentName:   { type: "string", example: "Africa",              description: "Full continent name" },
+          currencyIsoCode: { type: "string", example: "KES",                 description: "ISO 4217 currency code" },
+          currencyName:    { type: "string", example: "Kenyan Shilling",     description: "Currency name" },
+          languageIsoCode: { type: "string", example: "EN",                  description: "ISO 639 language code" },
+          languageName:    { type: "string", example: "English",             description: "Language name" },
+          flagUrl:         { type: "string", example: "https://...",         description: "URL to country flag image" },
+          phoneCode:       { type: "string", example: "+254",                description: "International dialing code" }
+        }
+      },
+
+      PagedCountryResponse: {
+        type: "object",
+        description: "Paginated wrapper around a list of country records",
+        properties: {
+          content:       { type: "array", items: { $ref: "#/components/schemas/CountryResponse" } },
+          totalElements: { type: "integer", example: 54,    description: "Total matching countries across all pages" },
+          totalPages:    { type: "integer", example: 3,     description: "Total number of pages" },
+          currentPage:   { type: "integer", example: 0,     description: "Current page index (zero-based)" },
+          pageSize:      { type: "integer", example: 20,    description: "Number of results in this page" },
+          first:         { type: "boolean", example: true,  description: "Whether this is the first page" },
+          last:          { type: "boolean", example: false, description: "Whether this is the last page" }
+        }
+      },
+
+      CurrencyData: {
+        type: "object",
+        properties: {
+          isoCode: { type: "string", example: "KES",              description: "ISO 4217 currency code" },
+          name:    { type: "string", example: "Kenyan Shilling",  description: "Full currency name" }
+        }
+      },
+
+      ContinentData: {
+        type: "object",
+        properties: {
+          code: { type: "string", example: "AF",     description: "2-letter continent code" },
+          name: { type: "string", example: "Africa", description: "Full continent name" }
+        }
+      },
+
+      LanguageData: {
+        type: "object",
+        properties: {
+          isoCode: { type: "string", example: "EN",      description: "ISO 639 language code" },
+          name:    { type: "string", example: "English", description: "Full language name" }
+        }
+      },
+
+      ErrorResponse: {
+        type: "object",
+        description: "Standard error response — never includes stack traces or internal class names",
+        properties: {
+          timestamp: { type: "string", format: "date-time", example: "2024-03-15T10:30:00Z" },
+          status:    { type: "integer", example: 404 },
+          error:     { type: "string",  example: "Not Found" },
+          message:   { type: "string",  example: "Country not found: XX" },
+          path:      { type: "string",  example: "/api/v1/countries/XX" },
+          traceId:   { type: "string",  example: "a3f2b1c4-...", description: "Use this to correlate with server logs" }
+        }
+      },
+
+      ValidationErrorResponse: {
+        type: "object",
+        description: "Returned on 400 when one or more input fields fail validation",
+        properties: {
+          timestamp:   { type: "string", format: "date-time" },
+          status:      { type: "integer", example: 400 },
+          error:       { type: "string",  example: "Validation Failed" },
+          fieldErrors: {
+            type: "object",
+            additionalProperties: { type: "string" },
+            example: { continent: "Continent code must be exactly 2 characters", currency: "Currency code must be exactly 3 characters" }
+          },
+          path:    { type: "string",  example: "/api/v1/countries" },
+          traceId: { type: "string",  example: "a3f2b1c4-..." }
+        }
+      },
+
+      CacheRefreshResponse: {
+        type: "object",
+        properties: {
+          status:     { type: "string",  example: "refreshed" },
+          timestamp:  { type: "string",  format: "date-time", example: "2024-03-15T10:30:00Z" },
+          durationMs: { type: "integer", example: 4820, description: "Time taken to re-warm all caches in milliseconds" }
+        }
+      }
+    }
+  }
+};
+
+window.onload = () => {
+  SwaggerUIBundle({
+    spec,
+    dom_id: '#swagger-ui',
+    deepLinking: true,
+    displayRequestDuration: true,
+    defaultModelsExpandDepth: 1,
+    defaultModelExpandDepth: 2,
+    docExpansion: 'list',
+    filter: true,
+    tryItOutEnabled: false,
+    layout: 'BaseLayout',
+    plugins: [SwaggerUIBundle.plugins.DownloadUrl]
+  });
+};
+</script>
+</body>
+</html>
